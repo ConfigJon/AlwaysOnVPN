@@ -15,12 +15,12 @@
     This script will create an Always On VPN device tunnel on supported Windows 10 devices
 
 .LINK
-    abcd
+    https://github.com/ConfigJon/AlwaysOnVPN/blob/master/New-AovpnDeviceTunnel.ps1
 
 .NOTES
     Creation Date:      May 28, 2019
-    Last Updated:       June 04, 2020
-    Special Note:       This is a modified version of a script that Richard Hicks has on his GitHub
+    Last Updated:       August 17, 2020
+    Note:               This is a modified version of a script that Richard Hicks has on his GitHub
     Original Script:    https://github.com/richardhicks/aovpn/blob/master/New-AovpnDeviceConnection.ps1
 #>
 
@@ -34,8 +34,9 @@ Param(
 )
 
 #Variables ============================================================================================================
-$RegPath = "SOFTWARE\ConfigJon"
-$DeviceTunnelVersion = 2
+$RegKey = "SOFTWARE\ConfigJon"
+$RegValue = "AOVPNDeviceTunnelVersion"
+$DeviceTunnelVersion = 1
 
 #Functions ============================================================================================================
 Function New-RegistryValue
@@ -149,7 +150,7 @@ Write-LogEntry -Value "Detect if the script is being run in the SYSTEM context" 
 $CurrentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 $CurrentUserName = $CurrentPrincipal.Identities.Name
 
-If($CurrentUserName -ne 'NT AUTHORITY\SYSTEM')
+if($CurrentUserName -ne 'NT AUTHORITY\SYSTEM')
 {
     Write-LogEntry -Value "This script is not running in the SYSTEM context" -Severity 3
     Write-LogEntry -Value "Use the Sysinternals tool Psexec.exe with the -i and -s parameters to run this script in the context of the local SYSTEM account." -Severity 3
@@ -171,7 +172,7 @@ while((Get-VpnConnection -Name $ProfileName -AllUserConnection -ErrorAction Sile
 }
 
 #Exit if the loop fails to delete the tunnel
-If(Get-VpnConnection -Name $ProfileName -AllUserConnection -ErrorAction SilentlyContinue)
+if(Get-VpnConnection -Name $ProfileName -AllUserConnection -ErrorAction SilentlyContinue)
 {
     $ErrorMessage = "Unable to remove existing outdated instance(s) of $ProfileName"
     Write-LogEntry -Value $ErrorMessage -Severity 3
@@ -219,13 +220,14 @@ catch [Exception]
     throw $ErrorMessage
 }
 
+#Configure enchanced IKEv2 security settings
+#Set-VpnConnectionIPsecConfiguration -ConnectionName $ProfileName -AuthenticationTransformConstants SHA256128 -CipherTransformConstants AES128 -DHGroup Group14 -EncryptionMethod AES128 -IntegrityCheckMethod SHA256 -PFSgroup PFS2048 -Force
+
 #Create a registry key for detection
 if(!($Error))
 {
     Write-LogEntry -Value "Create the registry key to use for the detection method" -Severity 1
-    # Configure enchanced IKEv2 security settings
-    #Set-VpnConnectionIPsecConfiguration -ConnectionName $ProfileName -AuthenticationTransformConstants SHA256128 -CipherTransformConstants AES128 -DHGroup Group14 -EncryptionMethod AES128 -IntegrityCheckMethod SHA256 -PFSgroup PFS2048 -Force
-    # Create a registry key for detection
-    New-RegistryValue -RegKey "HKLM:\$($RegPath)" -Name "AOVPN-Device-Tunnel-Version" -PropertyType DWord -Value $DeviceTunnelVersion
+    #Create a registry key for detection
+    New-RegistryValue -RegKey "HKLM:\$($RegKey)" -Name $RegValue -PropertyType DWord -Value $DeviceTunnelVersion
 }
 Write-LogEntry -Value "END - Always On VPN Device Tunnel Script" -Severity 1

@@ -15,14 +15,13 @@
     This script will create an Always On VPN user tunnel on supported Windows 10 devices
 
 .LINK
-    abcd
+    https://github.com/ConfigJon/AlwaysOnVPN/blob/master/New-AovpnUserTunnel.ps1
 
 .NOTES
     Creation Date:      May 28, 2019
-    Last Updated:       June 04, 2020
+    Last Updated:       August 17, 2020
     Note:               This is a modified version of a script that Richard Hicks has on his GitHub
     Original Script:    https://github.com/richardhicks/aovpn/blob/master/New-AovpnConnection.ps1
-
 #>
 
 [CmdletBinding()]
@@ -35,8 +34,9 @@ Param(
 )
 
 #Variables ============================================================================================================
-$RegPath = "SOFTWARE\ConfigJon"
-$UserTunnelVersion = 2
+$RegKey = "SOFTWARE\ConfigJon"
+$RegValue = "AOVPNUserTunnelVersion"
+$UserTunnelVersion = 1
 
 #Functions ============================================================================================================
 Function New-RegistryValue
@@ -237,7 +237,7 @@ if(!($Error))
 {
     Write-LogEntry -Value "Create the registry key to use for the detection method" -Severity 1
     New-PSDrive -PSProvider registry -Root HKEY_USERS -Name HKU
-    New-RegistryValue -RegKey "HKU:\$($sidvalue)\$($RegPath)" -Name "AOVPN-User-Tunnel-Version" -PropertyType DWord -Value $UserTunnelVersion
+    New-RegistryValue -RegKey "HKU:\$($sidvalue)\$($RegKey)" -Name $RegValue -PropertyType DWord -Value $UserTunnelVersion
     Remove-PSDrive -Name HKU
 }
 Write-LogEntry -Value "END - Always On VPN User Tunnel Script" -Severity 1
